@@ -19,6 +19,6 @@ RUN apt-get update && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /ton/build/rldp-http-proxy/rldp-http-proxy /usr/local/bin/
-RUN cd /usr/local/bin/ && wget https://test.ton.org/ton-global.config.json
+RUN cd /usr/local/bin/ && wget https://test.ton.org/ton-global-lite-client.config.json
 
 ENTRYPOINT ["rldp-http-proxy"]
