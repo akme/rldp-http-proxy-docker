@@ -1,24 +1,26 @@
-FROM ubuntu:18.04 as builder
+FROM ubuntu:22.04 as builder
 RUN apt-get update && \
-	apt-get install -y build-essential cmake clang-6.0 openssl libssl-dev zlib1g-dev gperf wget git && \
+	DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake clang openssl libssl-dev zlib1g-dev gperf wget git ninja-build libsecp256k1-dev libsodium-dev libmicrohttpd-dev pkg-config autoconf automake libtool && \
 	rm -rf /var/lib/apt/lists/*
-ENV CC clang-6.0
-ENV CXX clang++-6.0
+ENV CC clang
+ENV CXX clang++
+ENV CCACHE_DISABLE 1
+
+
 WORKDIR /
 RUN git clone --recursive https://github.com/ton-blockchain/ton
 WORKDIR /ton
 
 RUN mkdir build && \
 	cd build && \
-	cmake .. -DCMAKE_BUILD_TYPE=Release && \
-	cmake --build . --target rldp-http-proxy
+	cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPORTABLE=1 -DTON_ARCH= .. && \
+	ninja rldp-http-proxy
 
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 RUN apt-get update && \
-	apt-get install -y openssl wget&& \
+	apt-get install -y openssl wget libatomic1 libsecp256k1-dev libsodium-dev libmicrohttpd-dev && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /ton/build/rldp-http-proxy/rldp-http-proxy /usr/local/bin/
-RUN cd /usr/local/bin/ && wget https://test.ton.org/ton-global-lite-client.config.json
 
 ENTRYPOINT ["rldp-http-proxy"]
